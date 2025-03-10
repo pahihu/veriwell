@@ -1,33 +1,29 @@
-AC_PREREQ(2.59)
-AC_INIT(veriwell,2.8.7)
+AC_PREREQ([2.72])
+AC_INIT([veriwell],[2.8.7])
 AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 AM_INIT_AUTOMAKE
 
 # Check for user supplied arguments
 AC_MSG_CHECKING([use 32 bit compile])
-AC_ARG_ENABLE([m32],AC_HELP_STRING([--enable-m32],
-		                   [compile in 32 bit modes (default is no)]),
+AC_ARG_ENABLE([m32],AS_HELP_STRING([--enable-m32],[compile in 32 bit modes (default is no)]),
 	      [ac_cv_enable_m32=yes], [ac_cv_enable_m32=no])
 AC_MSG_RESULT([$ac_cv_enable_m32])
 
 AC_MSG_CHECKING([enable lxt support])
-AC_ARG_ENABLE([lxt],AC_HELP_STRING([--disable-lxt],
-		                   [compile lxt pli routines (default is yes)]),
+AC_ARG_ENABLE([lxt],AS_HELP_STRING([--disable-lxt],[compile lxt pli routines (default is yes)]),
 	      [ac_cv_enable_lxt=no],ac_cv_enable_lxt=yes)
 AC_MSG_RESULT([$ac_cv_enable_lxt])
 
 AC_MSG_CHECKING([enable lxt2 support])
-AC_ARG_ENABLE([lxt2],AC_HELP_STRING([--disable-lxt2],
-		                   [compile lxt2 pli routines (default is yes)]),
+AC_ARG_ENABLE([lxt2],AS_HELP_STRING([--disable-lxt2],[compile lxt2 pli routines (default is yes)]),
 	      [ac_cv_enable_lxt2=no],ac_cv_enable_lxt2=yes)
 AC_MSG_RESULT([$ac_cv_enable_lxt2])
 
 # Before configuring libtool check for --enable-all-static option
 AC_ARG_ENABLE(all-static,
-  AC_HELP_STRING([--enable-all-static],
-                 [Build completely static (standalone) binaries.]),
+  AS_HELP_STRING([--enable-all-static],[Build completely static (standalone) binaries.]),
   [
     if test "$enableval" = "yes" ; then
       LT_LDFLAGS="-all-static $LT_LDFLAGS"
@@ -57,12 +53,11 @@ then
     CPPFLAGS="$CPPFLAGS -m32"
     LDFLAGS="$LDFLAGS -m32"
 fi
-AC_PROG_LIBTOOL
+LT_INIT
 
 
 AC_ARG_ENABLE(gprof,
-AC_HELP_STRING([--enable-gprof],
-	       [Produce gprof profiling data in 'gmon.out' (GCC only).]),
+AS_HELP_STRING([--enable-gprof],[Produce gprof profiling data in 'gmon.out' (GCC only).]),
 [
     if test "$enableval" = "yes" ; then
       dnl Probably other compilers support -pg or something similar;
@@ -127,7 +122,15 @@ if test ! "$HAVE_LIBREADLINE" = 1; then
 fi
 
 # Checks for header files.
-AC_HEADER_STDC
+m4_warn([obsolete],
+[The preprocessor macro 'STDC_HEADERS' is obsolete.
+  Except in unusual embedded environments, you can safely include all
+  C89 headers unconditionally.])dnl
+# Autoupdate added the next two lines to ensure that your configure
+# script's behavior did not change.  They are probably safe to remove.
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 AC_CHECK_HEADERS([limits.h memory.h stddef.h stdlib.h stdarg.h string.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -135,12 +138,37 @@ AC_HEADER_STDBOOL
 AC_C_CONST
 AC_C_INLINE
 AC_TYPE_SIZE_T
-AC_HEADER_TIME
+m4_warn([obsolete],
+[Update your code to rely only on HAVE_SYS_TIME_H,
+then remove this warning and the obsolete code below it.
+All current systems provide time.h; it need not be checked for.
+Not all systems provide sys/time.h, but those that do, all allow
+you to include it and time.h simultaneously.])dnl
+AC_CHECK_HEADERS_ONCE([sys/time.h])
+# Obsolete code to be removed.
+if test $ac_cv_header_sys_time_h = yes; then
+  AC_DEFINE([TIME_WITH_SYS_TIME],[1],[Define to 1 if you can safely include both <sys/time.h>
+	     and <time.h>.  This macro is obsolete.])
+fi
+# End of obsolete code.
+
 AC_C_BIGENDIAN
 
 # Checks for library functions.
 AC_FUNC_MALLOC
-AC_TYPE_SIGNAL
+m4_warn([obsolete],
+[your code may safely assume C89 semantics that RETSIGTYPE is void.
+Remove this warning and the 'AC_CACHE_CHECK' when you adjust the code.])dnl
+AC_CACHE_CHECK([return type of signal handlers],[ac_cv_type_signal],[AC_COMPILE_IFELSE(
+[AC_LANG_PROGRAM([#include <sys/types.h>
+#include <signal.h>
+],
+		 [return *(signal (0, 0)) (0) == 1;])],
+		   [ac_cv_type_signal=int],
+		   [ac_cv_type_signal=void])])
+AC_DEFINE_UNQUOTED([RETSIGTYPE],[$ac_cv_type_signal],[Define as the return type of signal handlers
+		    ('int' or 'void').])
+
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([memmove memset pow strchr strdup strrchr])
 AC_LANG_PUSH(C++)
